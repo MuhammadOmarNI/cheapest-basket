@@ -1,0 +1,23 @@
+node_modules
+dist
+dist-ssr
+
+# Environment — never commit real keys
+.env
+.env.local
+.env.*.local
+
+# Vercel
+.vercel
+
+# Editor / OS
+.DS_Store
+*.local
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
