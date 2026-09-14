@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings · Cheapest Basket</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="settings">
+
+<main class="page">
+  <!-- UI.start() drops the header and nav in here -->
+
+  <section class="card enter enter-1">
+    <div class="card-head">
+      <h1>Where you shop</h1>
+    </div>
+    <div class="row">
+      <label class="grow">
+        Your area
+        <input type="text" id="location" placeholder="e.g. Kadıköy, Istanbul">
+      </label>
+      <button type="button" class="btn-soft" id="geo-btn">Use my location</button>
+      <button type="button" class="btn" id="find-btn" hidden>Find markets near me</button>
+    </div>
+    <p class="hint" id="status"></p>
+  </section>
+
+  <section class="card enter enter-2">
+    <div class="card-head">
+      <h2>Markets</h2>
+      <span class="eyebrow" id="market-count"></span>
+    </div>
+    <div class="chips" id="market-chips"></div>
+    <form class="row" id="market-form">
+      <input type="text" id="market-name" placeholder="Add a market, e.g. ŞOK">
+      <button type="submit" class="btn">Add</button>
+    </form>
+  </section>
+
+  <section class="card enter enter-3">
+    <div class="card-head">
+      <h2>Start over</h2>
+    </div>
+    <p class="hint">
+      Everything is saved in this browser only. Clearing it removes every meal,
+      price and market, and cannot be undone.
+    </p>
+    <div>
+      <button type="button" class="btn-soft" id="reset-btn">Clear all my data</button>
+    </div>
+  </section>
+</main>
+
+<script src="js/data.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/page-settings.js"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compare · Cheapest Basket</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="compare">
+
+<main class="page">
+  <!-- UI.start() drops the header and nav in here -->
+
+  <section class="card enter enter-1">
+    <div class="card-head">
+      <h1>Compare prices</h1>
+      <button type="button" class="btn" id="ask-ai-btn" hidden>Ask AI for prices</button>
+    </div>
+    <div class="row">
+      <label class="grow">
+        Meal
+        <select id="meal-picker"></select>
+      </label>
+    </div>
+    <div id="tabs-wrap"></div>
+    <div id="view"></div>
+  </section>
+</main>
+
+<script src="js/data.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/page-compare.js"></script>
+</body>
+</html>

@@ -3,24 +3,26 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dashboard · Cheapest Basket</title>
+<title>Price Guess · Cheapest Basket</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body data-page="dashboard">
+<body data-page="game">
 
 <main class="page">
   <!-- UI.start() drops the header and nav in here -->
 
-  <section class="card enter enter-1" id="overview">
-    <p class="hint">Loading…</p>
+  <section class="card enter enter-1">
+    <div class="card-head">
+      <h1>Price Guess</h1>
+      <span class="eyebrow">Which shop is cheaper?</span>
+    </div>
+    <div id="game"></div>
   </section>
-
-  <section class="enter enter-2" id="meals-preview"></section>
 </main>
 
 <script src="js/data.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/ai.js"></script>
-<script src="js/page-dashboard.js"></script>
+<script src="js/page-game.js"></script>
 </body>
 </html>

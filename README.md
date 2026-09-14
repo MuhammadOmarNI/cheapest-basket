@@ -1,140 +1,88 @@
 # Cheapest Basket
 
-Build a meal from its ingredients, set a budget, and see what that meal costs at each
-market near you — with the cheapest one flagged. Prices are estimated by AI
-automatically and can be corrected by hand at any time.
+Keep a list of meals, write down what each ingredient costs at the shops near you, and
+see where the whole basket is cheapest. There's a small game too.
 
-Built with React + Vite, Supabase for storage, and a Vercel serverless function that
-keeps the AI key off the browser.
-
----
-
-## What's in here
-
-| Path | What it is |
-| --- | --- |
-| `src/` | The React app |
-| `api/estimate-price.js` | Serverless function — **your AI code goes here** |
-| `supabase/schema.sql` | Run once in Supabase to create the tables |
-| `standalone/index.html` | A single-file version with no build step or database — open it in a browser and it just runs (saves to that browser only) |
-| `.env.example` | Template for your keys |
-
-If you just want to see the thing work, open `standalone/index.html` in a browser.
-Everything below is for the real deployed version.
+**Three languages, no build step.** Double-click `index.html` and it runs. No npm, no
+install, no server, nothing to compile. Everything is saved in your browser.
 
 ---
 
-## Setup
+## What each file does
 
-### 1. Supabase
+```
+index.html        Dashboard — the summary, and which market wins
+meals.html        Meals — add meals and their ingredients
+compare.html      Compare — the prices, three different ways
+game.html         Price Guess — a small game built from your own prices
+settings.html     Settings — your area, your markets, and a reset button
 
-1. Create a project at [supabase.com](https://supabase.com).
-2. Open **SQL Editor → New query**, paste all of `supabase/schema.sql`, and hit **Run**.
-   That creates the four tables and seeds a few Turkish market chains.
-3. Go to **Project Settings → API** and copy your **Project URL** and **anon public** key.
+css/style.css     Every bit of styling, for all five pages
 
-### 2. Local development
-
-```bash
-npm install
-cp .env.example .env      # then paste your Supabase URL + anon key into .env
-npm run dev
+js/data.js        Saving, loading, and the "which is cheapest" maths
+js/ui.js          The header, nav, drifting background, colours, formatting
+js/ai.js          ← YOUR PART. Two empty functions waiting for your API call
+js/page-*.js      One file per page, named after the page it belongs to
 ```
 
-Open the URL it prints (usually `http://localhost:5173`).
-
-One thing to know: `npm run dev` runs Vite only, so the `/api/estimate-price` function
-doesn't exist locally and the app will say "AI not set up". That's expected. To test the
-AI locally, use `npx vercel dev` instead — that runs both the site and the function.
-
-### 3. Deploy to Vercel
-
-1. Push this folder to a GitHub repo.
-2. On [vercel.com](https://vercel.com) → **Add New → Project** → import that repo.
-   Vercel detects Vite on its own; leave the build settings alone.
-3. Before clicking Deploy, open **Environment Variables** and add all three:
-
-   | Name | Value |
-   | --- | --- |
-   | `VITE_SUPABASE_URL` | your Supabase project URL |
-   | `VITE_SUPABASE_ANON_KEY` | your Supabase anon key |
-   | `AI_API_KEY` | your AI provider key |
-
-4. Deploy. Every `git push` after this redeploys automatically.
+Every page loads the same four scripts in the same order: `data.js`, `ui.js`, `ai.js`,
+then its own `page-*.js`. That's why they can all share the same data.
 
 ---
 
-## Hooking up the AI
+## The three ways of comparing
 
-`api/estimate-price.js` is a stub on purpose — that part is yours. It already handles the
-plumbing (reading the key, validating the request, returning errors the UI knows how to
-display); you just replace the "not implemented" return with a real API call. There's a
-complete working Anthropic example commented out right below it — uncomment, and you're done.
+**Cheapest per item** — one row per ingredient with the lowest price found anywhere and
+which shop had it. The total assumes you'd visit all of them.
 
-It must return `{ price: <number>, note: "<short string>" }`.
+**Every market** — the full grid, a column per shop. Click any cell to type a price.
 
-**Why a serverless function and not just `fetch` from the browser?** Anything in `src/`
-gets bundled and shipped to every visitor, so an API key there is public the moment you
-deploy. `api/` runs on Vercel's server, where `process.env.AI_API_KEY` never leaves.
-That's also why the AI key has no `VITE_` prefix — Vite only exposes variables that do.
+**Cheapest market** — the single shop where the whole basket costs least, plus what the
+same basket costs elsewhere.
 
-### When the AI runs
-
-It fires automatically, no button press needed:
-
-- you finish naming an ingredient → it prices that ingredient at every market you have
-- you add a market → it prices every ingredient already in the meal at that market
-- **Fill missing with AI** → catches any gaps left over
-- **Ask AI** on a single cell → retries just that one
-
-Every estimate lands as an editable price tagged `AI est.` Click it, type your own
-number, and it becomes `manual` — your value is never overwritten by a later estimate.
+A market only competes for "cheapest market" once it has a price for *every* ingredient.
+Otherwise a shop with half its prices missing would win just for having less to add up.
 
 ---
 
-## How the data is stored
+## Adding the AI
 
-Four tables: `markets`, `meals`, `meal_ingredients`, `prices`.
+`js/ai.js` is the one file left deliberately empty — that part is yours. It has two
+functions to fill in, and a complete working example commented out under each:
 
-Prices are stored per **ingredient × market**, and each price is for the exact quantity
-the recipe calls for (500 g of chicken, not "chicken per kg"). That avoids unit-conversion
-maths entirely and matches how you actually shop.
+- `AI.findMarkets(location)` → `["BİM", "A101", ...]`, powers **Find markets near me**
+- `AI.estimatePrice(ingredient, market, meal, location)` → `{ price, note }`, powers
+  **Ask AI for prices**
 
-### Request count
+Set `AI.ready = true` once they really work. Until then the AI buttons stay hidden and
+you type prices by hand, so nothing is broken in the meantime.
 
-Loading the app is **3 requests total**, regardless of how many ingredients or markets you
-have — not one per cell. The trick is a single nested select in `src/lib/api.js`:
-
-```js
-supabase.from('meals').select(`
-  id, name, budget, created_at,
-  meal_ingredients (
-    id, name, qty, unit,
-    prices ( id, market_id, price, source, note, updated_at )
-  )
-`)
-```
-
-Supabase joins `meals → meal_ingredients → prices` server-side and returns the whole tree
-in one response. This only works because of the foreign keys in `schema.sql`. After that,
-edits update local state optimistically, so the UI never re-fetches just to show your own
-change.
+**About your API key.** This is a plain website with no server, so a key pasted into
+`ai.js` is readable by anyone who opens the page. That's fine while this only lives on
+your own computer. Before putting it online for other people, move the call to a server
+(on Vercel that means an `api/` folder) and keep the key there.
 
 ---
 
-## Security notes
+## Where your data lives
 
-Two things to be aware of before you share the deployed URL:
+In `localStorage` — a small box of text the browser keeps for this page. It survives
+closing the tab and restarting the computer.
 
-**Row Level Security is off.** The tables are created wide open, and the Supabase anon key
-ships in the browser bundle, so anyone with your URL can read and write your data. Fine for
-a personal tool nobody else knows about. `supabase/schema.sql` has a commented-out policy
-set at the bottom if you'd rather lock writes behind a login — note that turning RLS on
-without adding a sign-in flow will make every write fail, so do one then the other.
+What that also means: it's **per browser and per computer**. Open the app in a different
+browser and it starts empty. Clearing your browsing data clears it too. There's no
+account and no server, which is what makes the whole thing work with no setup.
 
-**Don't put the AI key in `standalone/index.html` if you deploy that file publicly.** It's
-designed for local use, where a pasted key only sits on your own machine. The `api/`
-function exists precisely so the deployed version doesn't need one in the browser.
+Settings → **Clear all my data** wipes it deliberately.
+
+---
+
+## Putting it online
+
+Because it's just files, almost anything will host it. On Vercel: push to GitHub, import
+the repo, and deploy — no build command, no framework setting. GitHub Pages works too.
+
+Remember the key warning above before you make it public.
 
 ---
 

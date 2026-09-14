@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meals · Cheapest Basket</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="meals">
+
+<main class="page">
+  <!-- UI.start() drops the header and nav in here -->
+
+  <section class="card enter enter-1">
+    <div class="card-head">
+      <h1>Your meals</h1>
+      <button type="button" class="btn" id="new-meal-btn">+ New meal</button>
+    </div>
+    <form class="row" id="new-meal-form" hidden>
+      <input type="text" id="new-meal-name" placeholder="Meal name, e.g. Butter chicken">
+      <button type="submit" class="btn">Add</button>
+      <button type="button" class="btn-soft" id="cancel-meal">Cancel</button>
+    </form>
+    <div id="meal-list-wrap"></div>
+  </section>
+
+  <section class="card enter enter-2" id="editor" hidden></section>
+</main>
+
+<script src="js/data.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/page-meals.js"></script>
+</body>
+</html>
