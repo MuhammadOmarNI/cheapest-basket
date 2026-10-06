@@ -16,11 +16,13 @@
   function statsHtml(s) {
     return '<div class="stat-row">' +
       '<div class="stat"><span class="stat-value">' + s.mealCount + '</span>' +
-        '<span class="stat-label">' + (s.mealCount === 1 ? 'meal' : 'meals') + '</span></div>' +
+        '<span class="stat-label">' + T(s.mealCount === 1 ? 'dash.meal' : 'dash.meals') + '</span></div>' +
       '<div class="stat"><span class="stat-value">' + s.marketCount + '</span>' +
-        '<span class="stat-label">' + (s.marketCount === 1 ? 'market' : 'markets') + '</span></div>' +
+        '<span class="stat-label">' + T(s.marketCount === 1 ? 'dash.market' : 'dash.markets') + '</span></div>' +
       '<div class="stat"><span class="stat-value">' + s.pricedCount + '</span>' +
-        '<span class="stat-label">priced</span></div>' +
+        // "priced" لوحدها كانت بتوحي بعدد الأسعار. ده عدد الوجبات
+        // اللي فيها محل واحد على الأقل مسعّر كل مكوّناتها.
+        '<span class="stat-label">' + T('dash.fullyPriced') + '</span></div>' +
     '</div>';
   }
 
@@ -53,7 +55,7 @@
           (s.mealCount
             ? 'Add prices for one meal at every market and the comparison appears here. ' +
               '<a href="compare.html">Go to Compare</a>.'
-            : 'Start by adding a meal. <a href="meals.html">Go to Meals</a>.') +
+            : T('dash.start') + ' <a href="meals.html">' + T('dash.goToMeals') + '</a>.') +
         '</p>';
       return;
     }
@@ -98,12 +100,21 @@
         meals.map(function (m) {
           var ranked = DB.rankMarkets(m);
           var count = m.ingredients.length;
+          var priced = m.ingredients.filter(function (i) {
+            return Object.keys(i.prices || {}).length;
+          }).length;
+
           var sub = !count
-            ? 'No ingredients yet'
-            : count + ' ingredient' + (count === 1 ? '' : 's') +
+            ? T('dash.noIngredients')
+            : count + ' ' + T(count === 1 ? 'dash.ingredient' : 'dash.ingredients') +
+              // ranked بيبقى فاضي لو مفيش محل مسعّر كل المكوّنات —
+              // ومش معناه إن مفيش أسعار خالص. "no prices yet" كانت
+              // بتكدب على اليوزر اللي لسه حاطط سعر بإيده.
               (ranked.length
-                ? ' · ' + UI.money(ranked[0].total) + ' at ' + ranked[0].market.name
-                : ' · no prices yet');
+                ? ' \u00b7 ' + UI.money(ranked[0].total) + ' ' + T('dash.at') + ' ' + ranked[0].market.name
+                : priced
+                  ? ' \u00b7 ' + priced + ' ' + T('dash.of') + ' ' + count + ' ' + T('dash.priced')
+                  : ' \u00b7 ' + T('dash.noPrices'));
           return '<li><a class="meal-card" href="compare.html?meal=' + m.id + '">' +
             '<span class="meal-name">' + UI.esc(m.name) + '</span>' +
             '<span class="meal-sub">' + UI.esc(sub) + '</span>' +

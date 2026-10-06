@@ -1,23 +1,19 @@
-node_modules
-dist
-dist-ssr
-
-# Environment — never commit real keys
+# المفاتيح. ده أهم سطر في الملف ده.
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.pyc
 
 # Vercel
-.vercel
+.vercel/
 
-# Editor / OS
+# نظام التشغيل والمحرر
 .DS_Store
-*.local
-.idea
-.vscode/*
-!.vscode/extensions.json
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+Thumbs.db
+.vscode/
+*.ps1
+cheapest-basket-vercel.zip

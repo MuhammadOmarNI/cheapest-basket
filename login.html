@@ -3,20 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Price Guess · Cheapest Basket</title>
+<title>Sign in · Cheapest Basket</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body data-page="game">
+<body data-page="login">
 
 <main class="page">
   <!-- UI.start() drops the header and nav in here -->
 
-  <section class="card enter enter-1">
-    <div class="card-head">
-      <h1 data-i18n="game.title">Price Guess</h1>
-      <span class="eyebrow" data-i18n="game.which">Which shop is cheaper?</span>
-    </div>
-    <div id="game"></div>
+  <section class="card enter enter-1" id="auth-card">
+    <p class="hint">Loading…</p>
   </section>
 </main>
 
@@ -27,6 +23,6 @@
 <script src="js/data.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/api.js"></script>
-<script src="js/page-game.js"></script>
+<script src="js/page-login.js"></script>
 </body>
 </html>

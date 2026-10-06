@@ -18,14 +18,16 @@
 
   /* Used only when the real data has nothing with two prices to compare yet. */
   var PRACTICE = [
-    { item: 'Chicken breast', qty: '500 g', a: 'BİM', b: 'A101', pa: 178, pb: 195 },
-    { item: 'Butter',         qty: '250 g', a: 'Migros', b: 'BİM', pa: 96, pb: 84 },
-    { item: 'Rice',           qty: '1 kg',  a: 'A101', b: 'Migros', pa: 62, pb: 71 },
-    { item: 'Eggs',           qty: '10',    a: 'BİM', b: 'Migros', pa: 78, pb: 92 },
-    { item: 'Olive oil',      qty: '1 L',   a: 'Migros', b: 'A101', pa: 310, pb: 289 },
-    { item: 'Tomatoes',       qty: '1 kg',  a: 'A101', b: 'BİM', pa: 44, pb: 38 },
-    { item: 'Yoghurt',        qty: '1 kg',  a: 'BİM', b: 'A101', pa: 88, pb: 95 },
-    { item: 'Onions',         qty: '2 kg',  a: 'Migros', b: 'BİM', pa: 52, pb: 41 }
+    // محلات موجودة فعلاً في شمال قبرص. كانت BİM / A101 / Migros —
+    // سلاسل تركيا، واليوزر هنا عمره ما شافها. أسعار تمرين، مش حقيقية.
+    { item: 'Chicken breast', qty: '500 g', a: 'Lemar',  b: 'Onur',   pa: 178, pb: 195 },
+    { item: 'Butter',         qty: '250 g', a: 'Kiler',  b: 'Lemar',  pa: 96,  pb: 84 },
+    { item: 'Rice',           qty: '1 kg',  a: 'Onur',   b: 'Kiler',  pa: 62,  pb: 71 },
+    { item: 'Eggs',           qty: '10',    a: 'Lemar',  b: 'Kiler',  pa: 78,  pb: 92 },
+    { item: 'Olive oil',      qty: '1 L',   a: 'Kiler',  b: 'Onur',   pa: 310, pb: 289 },
+    { item: 'Tomatoes',       qty: '1 kg',  a: 'Onur',   b: 'Lemar',  pa: 44,  pb: 38 },
+    { item: 'Yoghurt',        qty: '1 kg',  a: 'Lemar',  b: 'Onur',   pa: 88,  pb: 95 },
+    { item: 'Onions',         qty: '2 kg',  a: 'Kiler',  b: 'Lemar',  pa: 52,  pb: 41 }
   ];
 
   var score = 0;
@@ -158,18 +160,18 @@
     var verdict = document.getElementById('verdict');
     if (tie) {
       verdict.className = 'verdict good';
-      verdict.textContent = 'Same price at both — that one’s free.';
+      verdict.textContent = T('game.samePrice');
     } else if (correct) {
       verdict.className = 'verdict good';
       var saved = Math.abs(round.a.price - round.b.price);
-      verdict.textContent = 'Right — ' + UI.money(saved) + ' cheaper.' +
+      verdict.textContent = T('game.right') + ' ' + UI.money(saved) + ' cheaper.' +
         (streak >= 3 ? '  ' + streak + ' in a row!' : '');
     } else {
       verdict.className = 'verdict bad';
       verdict.textContent = round[cheaper].name + ' was cheaper.';
     }
 
-    if (record && score > 0) UI.toast('New best score: ' + score + ' 🎉', 'good');
+    if (record && score > 0) UI.toast(T('game.newBest') + ' ' + score + ' 🎉', 'good');
   }
 
   /* ================================================================ events == */

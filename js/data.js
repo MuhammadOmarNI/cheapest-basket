@@ -31,10 +31,13 @@ var DB = (function () {
 
   function starter() {
     return {
+      // محلات موجودة فعلاً في شمال قبرص. الأسماء القديمة كانت
+      // BİM / A101 / Migros — دي سلاسل تركيا، ومش موجودة هنا.
+      // المحل الأول هو نفسه مصدر الأسعار الآلية.
       markets: [
-        { id: uid(), name: 'BİM', order: 1 },
-        { id: uid(), name: 'A101', order: 2 },
-        { id: uid(), name: 'Migros', order: 3 }
+        { id: uid(), name: 'Kıbrıs Sanal Market', order: 1 },
+        { id: uid(), name: 'Lemar', order: 2 },
+        { id: uid(), name: 'Onur', order: 3 }
       ],
       meals: [],
       settings: { location: '' },
@@ -63,12 +66,42 @@ var DB = (function () {
   }
 
   function save() {
+    // Stamped on every change so cloud.js can tell which copy is newer —
+    // this device's, or the one already in Supabase.
+    data.updatedAt = Date.now();
     try {
       localStorage.setItem(KEY, JSON.stringify(data));
     } catch (e) {
       // Storage full or blocked. The page keeps working; it just won't remember.
     }
+    // If you're signed in, send a copy up too. This waits a moment and sends
+    // once, so typing a price doesn't fire a request per keystroke.
+    if (window.CLOUD && CLOUD.active()) CLOUD.queuePush(data);
   }
+
+  /* --------------------------------------------------- the whole thing ----
+     cloud.js uses these two to copy everything up and bring everything down.
+     Nothing else should need them.                                          */
+
+  function exportAll() { return data; }
+
+  function importAll(incoming) {
+    if (!incoming || typeof incoming !== 'object') return false;
+    data = incoming;
+    if (!data.markets) data.markets = [];
+    if (!data.meals) data.meals = [];
+    if (!data.settings) data.settings = { location: '' };
+    if (!data.game) data.game = { best: 0 };
+    // Keep the incoming stamp: this copy is as old as wherever it came from,
+    // and overwriting it with "now" would make a stale copy look like the newest.
+    if (!data.updatedAt) data.updatedAt = 0;
+    try {
+      localStorage.setItem(KEY, JSON.stringify(data));
+    } catch (e) { /* as above */ }
+    return true;
+  }
+
+  function stamp() { return data.updatedAt || 0; }
 
   /* ============================================================== markets == */
 
@@ -76,14 +109,24 @@ var DB = (function () {
     return data.markets.slice().sort(function (a, b) { return a.order - b.order; });
   }
 
-  function addMarket(name) {
+  /** `metres` is optional — only the ones found by distance search have it. */
+  function addMarket(name, metres) {
     var order = data.markets.length
       ? Math.max.apply(null, data.markets.map(function (m) { return m.order; })) + 1
       : 1;
     var market = { id: uid(), name: name, order: order };
+    if (metres != null) market.metres = metres;
     data.markets.push(market);
     save();
     return market;
+  }
+
+  /** Re-running the search updates how far away a market you already have is. */
+  function setMarketDistance(id, metres) {
+    var m = market(id);
+    if (!m) return;
+    m.metres = metres;
+    save();
   }
 
   function removeMarket(id) {
@@ -299,6 +342,7 @@ var DB = (function () {
   return {
     uid: uid,
     markets: markets, addMarket: addMarket, removeMarket: removeMarket, market: market,
+    setMarketDistance: setMarketDistance,
     meals: meals, meal: meal, addMeal: addMeal, renameMeal: renameMeal, removeMeal: removeMeal,
     addIngredient: addIngredient, updateIngredient: updateIngredient,
     removeIngredient: removeIngredient, ingredient: ingredient,
@@ -308,6 +352,7 @@ var DB = (function () {
     fullyPriced: fullyPriced, mealTotalAt: mealTotalAt, rankMarkets: rankMarkets,
     cheapestPerIngredient: cheapestPerIngredient, overview: overview,
     allPricedIngredients: allPricedIngredients,
+    exportAll: exportAll, importAll: importAll, stamp: stamp,
     reset: reset
   };
 })();

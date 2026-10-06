@@ -113,15 +113,38 @@ h2 { font-family: var(--font-display); font-size: 19px; font-weight: 700; margin
 .brand-mark { font-size: 22px; transition: transform .35s var(--ease); display: inline-block; }
 .brand:hover .brand-mark { transform: rotate(-12deg) scale(1.15); }
 
+.top-right { display: inline-flex; align-items: center; gap: 7px; min-width: 0; }
+
 .where {
   text-decoration: none; background: var(--card); border: 1.5px solid var(--line-strong);
   color: var(--ink-soft); border-radius: 999px; padding: 6px 14px;
   font-size: 13px; font-weight: 700; white-space: nowrap;
-  max-width: 52%; overflow: hidden; text-overflow: ellipsis;
+  max-width: 230px; overflow: hidden; text-overflow: ellipsis;
   transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease),
               background var(--dur) var(--ease);
 }
 .where:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+/* The little sync pill. Only rendered when Supabase is actually set up. */
+.sync-pill {
+  display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+  background: var(--card); border: 1.5px solid var(--line-strong); border-radius: 999px;
+  padding: 6px 12px; font-size: 12px; font-weight: 700; color: var(--ink-soft);
+  white-space: nowrap;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-faint); flex-shrink: 0; }
+.sync-busy .sync-dot { background: var(--gold); animation: pulse 1.1s ease-in-out infinite; }
+.sync-ok { color: #0f6f3d; border-color: #bfe3cd; }
+.sync-ok .sync-dot { background: #0f8a4a; }
+.sync-bad { color: var(--warn); border-color: #eccbbd; }
+.sync-bad .sync-dot { background: var(--warn); }
+
+/* Numbered setup steps — a real sequence, so the numbers carry meaning. */
+.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 7px;
+         font-size: 13.5px; color: var(--ink-soft); }
+.steps li { padding-left: 3px; }
+.steps code { background: var(--soft); padding: 1px 5px; border-radius: 5px; font-size: 12.5px; }
 
 /* =================================================================== nav === */
 
@@ -326,6 +349,11 @@ button:disabled { cursor: default; opacity: .45; }
   transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
 .chip:hover { border-color: var(--ink-faint); transform: translateY(-1px); }
+.chip-far {
+  font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums;
+  color: var(--accent); background: var(--accent-soft);
+  padding: 2px 7px; border-radius: 999px;
+}
 
 /* ================================================================= views === */
 
@@ -521,4 +549,193 @@ tfoot .muted { display: block; font-size: 10.5px; }
   .question-item { font-size: 23px; }
   .choice { padding: 16px 10px; font-size: 16px; }
   .blob { filter: blur(50px); opacity: .28; }
+  /* Two pills plus the logo is too much at this width. The area is still one
+     tap away on the Settings page, and sync state is the more urgent of the two. */
+  .where { display: none; }
+}
+
+
+
+/* ================================================================= admin === */
+/* لون الصفحة. فحصناه: تباين 9.6:1 مع النص الأبيض — أعلى بكتير من 4.5 المطلوبة،
+   ومختلف عن كل الصفحات التانية (رمادي مزرق داكن، مش أزرق ولا أخضر). */
+body[data-page="admin"] { --accent: #2f4858; --accent-soft: #e9eff3; }
+
+/* الصفحة عربي وبالتالي dir="rtl". الجدول في باقي المشروع بيصفّ يمين
+   والعمود الأول شمال — ده بيتقلب غلط في RTL. نستخدم start/end
+   (منطقي، بيتبع اتجاه الصفحة) بدل left/right (ثابت). */
+body[data-page="admin"] thead th,
+body[data-page="admin"] tbody td,
+body[data-page="admin"] tbody td:first-child { text-align: start; }
+
+/* --- اختيار الطريقة --- */
+.opts {
+  display: grid;
+  /* auto-fit يعني: حط أعمدة قد ما تقدر بحد أدنى 250px لكل واحد.
+     على الموبايل بيبقى عمود واحد لوحده من غير media query. */
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 11px;
+}
+
+.opt {
+  background: var(--card);
+  border: 2px solid var(--line-strong);
+  border-radius: 15px;
+  padding: 15px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+
+.opt:hover { border-color: var(--accent); }
+
+/* :has() يعني "العنصر اللي جواه". يخلّي الكارتونة كلها تتلون لما
+   الراديو اللي جواها يتحدد — من غير أي JavaScript. */
+.opt:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.opt-head { display: flex; align-items: center; gap: 9px; }
+.opt input { width: 17px; height: 17px; accent-color: var(--accent); flex-shrink: 0; }
+
+.opt-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.opt-note { font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
+
+/* --- شريط التقدم --- */
+/* عمودين بس: الشريط والنسبة. (.bar-row في المقارنة عنده تلاتة،
+   أولهم اسم المحل — مش محتاجينه هنا.) */
+.prog {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 11px;
+  align-items: center;
+  margin-top: 13px;
+}
+
+.prog .bar-track { border-radius: 7px; overflow: hidden; }
+.prog .bar-fill { width: 0; transition: width .4s var(--ease); }
+
+/* --- البحث --- */
+/* .price-input عرضه 88px (مخصص لخانة سعر في جدول). دي محتاجة تتنفّس. */
+.admin-search {
+  flex: 1;
+  min-width: 0;
+  max-width: 300px;
+  text-align: start;
+  padding: 8px 11px;
+}
+
+/* .price-error عنده max-width: 112px عشان بيقعد في خانة جدول ضيقة.
+   رسايل الأدمن جُمل كاملة. */
+.admin-error {
+  display: block;
+  color: var(--warn);
+  font-weight: 700;
+  max-width: none;
+  font-size: 13px;
+}
+
+/* الأسعار أرقام: ما تتلفّش على سطرين، والخانات متساوية العرض عشان
+   الأرقام تتصف تحت بعضها. */
+.admin-price { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* --- تجربة سعر --- */
+/* grid مش flex: عايزين كل خانة عرضها محدد وما تتمططش.
+   .admin-search عنده flex:1 وكان بياخد السطر كله ويزق الباقي تحت. */
+.try-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 92px auto auto;
+  gap: 9px;
+  align-items: center;
+}
+.try-row .admin-search { flex: none; max-width: none; width: 100%; }
+.try-qty  { width: 100%; padding: 8px 10px; text-align: start; }
+.try-unit { padding: 8px 10px; width: 100%; }
+.try-row .btn { white-space: nowrap; }
+
+/* على الموبايل: المكوّن سطر لوحده، والباقي تحته */
+@media (max-width: 560px) {
+  .try-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .try-row .admin-search { grid-column: 1 / -1; }
+  .try-row .btn { grid-column: 1 / -1; }
+}
+
+.range {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  margin: 15px 0 4px;
+}
+.range-num {
+  font-family: var(--font-display); font-size: 27px; font-weight: 800;
+  color: var(--accent); font-variant-numeric: tabular-nums;
+}
+.range-arrow { color: var(--ink-soft); font-size: 19px; }
+.range-basis {
+  font-size: 12px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .05em; color: var(--ink-soft);
+  background: var(--soft); padding: 3px 9px; border-radius: 7px;
+}
+.range-note { font-size: 12.5px; color: var(--ink-soft); margin: 0 0 13px; }
+.dim { opacity: .5; }
+
+/* الشريط البسيط: مفيش nav تحته، فمحتاج هامش سفلي بنفسه */
+.topbar-bare { margin-bottom: 19px; }
+.topbar-bare .brand { cursor: default; }
+
+/* ============================================================== language === */
+/* شريط صغير فوق على الشمال. خارج .page عن قصد — ده إعداد للمتصفح
+   كله، مش جزء من محتوى الصفحة. */
+.langbar {
+  position: fixed;
+  top: 10px;
+  left: 10px;                 /* left مش inset-inline-start: يفضل مكانه
+                                 لما اللغة تتقلب لعربي، وإلا اللي بدّل
+                                 بالغلط مش هيعرف يرجّعها */
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px 3px 6px;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  box-shadow: 0 2px 8px -4px rgba(35, 40, 42, .35);
+  direction: ltr;             /* أسماء اللغات بتتكتب بخطوطها هي */
+}
+
+.langbar-globe { font-size: 13px; color: var(--ink-soft); line-height: 1; }
+
+.langbar select {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+  padding: 2px 16px 2px 2px;
+  cursor: pointer;
+  /* السهم مرسوم بـ SVG جوّه الـ CSS — من غيره الـ select بيبان
+     كأنه نص عادي ومحدش بيعرف إنه بيتضغط */
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 2px center;
+  background-size: 9px;
+}
+
+.langbar select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* الشريط بيقعد فوق الهيدر على الشاشات الصغيرة، فبندّي الصفحة مساحة */
+@media (max-width: 760px) {
+  .page { padding-top: 46px; }
+  .langbar { top: 8px; left: 8px; }
 }

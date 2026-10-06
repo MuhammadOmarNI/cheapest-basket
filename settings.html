@@ -13,47 +13,59 @@
 
   <section class="card enter enter-1">
     <div class="card-head">
-      <h1>Where you shop</h1>
+      <h1 data-i18n="set.whereShop">Where you shop</h1>
     </div>
     <div class="row">
       <label class="grow">
-        Your area
-        <input type="text" id="location" placeholder="e.g. Kadıköy, Istanbul">
+        <span data-i18n="set.yourArea">Your area</span>
+        <input type="text" id="location" data-i18n-ph="set.areaPh" placeholder="e.g. Gönyeli, Nicosia">
       </label>
-      <button type="button" class="btn-soft" id="geo-btn">Use my location</button>
-      <button type="button" class="btn" id="find-btn" hidden>Find markets near me</button>
+      <button type="button" class="btn-soft" id="geo-btn" data-i18n="set.useLocation">Use my location</button>
+      <button type="button" class="btn" id="find-btn" hidden data-i18n="set.findMarkets">Find markets near me</button>
     </div>
     <p class="hint" id="status"></p>
   </section>
 
   <section class="card enter enter-2">
     <div class="card-head">
-      <h2>Markets</h2>
+      <h2 data-i18n="set.markets">Markets</h2>
       <span class="eyebrow" id="market-count"></span>
     </div>
     <div class="chips" id="market-chips"></div>
     <form class="row" id="market-form">
-      <input type="text" id="market-name" placeholder="Add a market, e.g. ŞOK">
-      <button type="submit" class="btn">Add</button>
+      <input type="text" id="market-name" data-i18n-ph="set.marketPh" placeholder="Add a market, e.g. Kiler">
+      <button type="submit" class="btn" data-i18n="meals.add">Add</button>
     </form>
   </section>
 
   <section class="card enter enter-3">
     <div class="card-head">
-      <h2>Start over</h2>
+      <h2 data-i18n="set.account">Your account</h2>
+      <span class="eyebrow" id="sync-state"></span>
     </div>
-    <p class="hint">
-      Everything is saved in this browser only. Clearing it removes every meal,
-      price and market, and cannot be undone.
+    <div id="sync-body"></div>
+  </section>
+
+  <section class="card enter enter-3">
+    <div class="card-head">
+      <h2 data-i18n="set.startOver">Start over</h2>
+    </div>
+    <p class="hint" id="reset-note">
+      Clearing removes every meal, price and market, and cannot be undone.
     </p>
     <div>
-      <button type="button" class="btn-soft" id="reset-btn">Clear all my data</button>
+      <button type="button" class="btn-soft" id="reset-btn" data-i18n="set.clearAll">Clear all my data</button>
     </div>
   </section>
 </main>
 
+<!-- i18n الأول: باقي الملفات بتنادي T() وقت التحميل -->
+<script src="js/i18n.js"></script>
+<script src="js/cloud.js"></script>
+<script src="js/auth.js"></script>
 <script src="js/data.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/api.js"></script>
 <script src="js/ai.js"></script>
 <script src="js/page-settings.js"></script>
 </body>

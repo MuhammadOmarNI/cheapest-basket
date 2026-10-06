@@ -19,9 +19,9 @@
   var askBtn = document.getElementById('ask-ai-btn');
 
   var VIEWS = [
-    { id: 'item',   label: 'Cheapest per item' },
-    { id: 'all',    label: 'Every market' },
-    { id: 'market', label: 'Cheapest market' }
+    { id: 'item',   key: 'cmp.perItem' },
+    { id: 'all',    key: 'cmp.everyMarket' },
+    { id: 'market', key: 'cmp.bestMarket' }
   ];
 
   var mealId = new URLSearchParams(location.search).get('meal');
@@ -50,12 +50,14 @@
     }
 
     return '<span class="price-cell' + flash + '">' +
-      '<button type="button" class="price-value" title="Click to edit" data-edit="' + k + '">' +
+      '<button type="button" class="price-value" title="' + UI.esc(T('cmp.clickEdit')) + '" data-edit="' + k + '">' +
         UI.money(price.value) + '</button>' +
-      '<span class="tag ' + (price.source === 'ai' ? 'ai' : 'manual') + '"' +
-        (price.note ? ' title="' + UI.esc(price.note) + '"' : '') + '>' +
-        (price.source === 'ai' ? 'AI' : 'you') + '</span>' +
-      '<button type="button" class="btn-x tiny" title="Remove price" data-clear="' + k + '">×</button>' +
+      // "you" على سعر جاي من السيرفر كذب. ثلاث مصادر، ثلاث علامات.
+      '<span class="tag ' + (price.source === 'manual' ? 'manual' : 'ai') + '"' +
+        ' title="' + UI.esc(price.note || (price.source === 'manual'
+          ? T('cmp.typedIn') : T('cmp.fetched'))) + '">' +
+        (price.source === 'api' ? T('cmp.web') : price.source === 'ai' ? 'AI' : T('cmp.you')) + '</span>' +
+      '<button type="button" class="btn-x tiny" title="' + UI.esc(T('cmp.removePrice')) + '" data-clear="' + k + '">×</button>' +
     '</span>';
   }
 
@@ -201,11 +203,14 @@
       return;
     }
 
-    askBtn.hidden = !AI.ready;
+    askBtn.hidden = !API.isReady();
+    if (API.isReady()) {
+      askBtn.textContent = T('cmp.getPrices') + ' ' + API.source();
+    }
 
     tabsWrap.innerHTML = '<div class="tabs">' + VIEWS.map(function (v) {
       return '<button type="button" class="tab' + (view === v.id ? ' active' : '') +
-        '" data-view="' + v.id + '">' + v.label + '</button>';
+        '" data-view="' + v.id + '">' + T(v.key) + '</button>';
     }).join('') + '</div>';
 
     viewEl.innerHTML =
@@ -213,10 +218,11 @@
       view === 'all' ? viewAllMarkets(meal) :
       viewCheapestMarket(meal);
 
-    if (!AI.ready) {
+    if (!API.isReady()) {
       viewEl.insertAdjacentHTML('beforeend',
-        '<p class="hint">Prices are yours to type in for now — click any of them. ' +
-        'Open <code>js/ai.js</code> to let the AI fill them in instead.</p>');
+        '<p class="hint">Click any price to type your own. To fill them in ' +
+        'automatically, start the price server: open the <code>api</code> folder and run ' +
+        '<code>python -m uvicorn main:app --reload --port 8010</code>.</p>');
     }
   }
 
@@ -274,21 +280,19 @@
     var meal = current();
     if (!meal) return;
 
-    var jobs = [];
-    meal.ingredients.forEach(function (ing) {
-      if (!ing.name.trim()) return;
-      DB.markets().forEach(function (market) {
-        if (ing.prices[market.id]) return;
-        jobs.push({ ing: ing, market: market });
-      });
+    // المصدر محل واحد. الأسعار بتتحط في عموده هو.
+    // (الزحف بياخد من موقع واحد، فمفيش معنى إننا نملا كل الأعمدة.)
+    var market = sourceMarket();
+
+    var jobs = meal.ingredients.filter(function (ing) {
+      return ing.name.trim() && !ing.prices[market.id];
     });
 
-    if (!jobs.length) { UI.toast('Every price is already filled in'); return; }
+    if (!jobs.length) { UI.toast(T('cmp.allFilled')); return; }
 
     askBtn.disabled = true;
-    UI.toast('Asking the AI for ' + jobs.length + ' price' + (jobs.length === 1 ? '' : 's') + '…');
+    UI.toast('Looking up ' + jobs.length + ' price' + (jobs.length === 1 ? '' : 's') + '…');
 
-    // Four at a time, so twenty cells don't fire twenty requests at once.
     var queue = jobs.slice();
     var running = 0;
     var finished = 0;
@@ -300,20 +304,28 @@
         render();
         return;
       }
+
+      // أربعة في المرة. أول طلب لمكوّن جديد بيكلّف نداءين AI على
+      // السيرفر، فعشرين طلب مرة واحدة هيخنقه.
       while (queue.length && running < 4) {
-        (function (job) {
+        (function (ing) {
           running++;
-          var k = key(job.market.id, job.ing.id);
+          var k = key(market.id, ing.id);
           busy[k] = true;
           render();
 
-          Promise.resolve()
-            .then(function () {
-              return AI.estimatePrice(job.ing, job.market, meal, DB.settings().location);
-            })
-            .then(function (result) {
-              if (!result || !isFinite(Number(result.price))) throw new Error('No price returned');
-              savePrice(job.market.id, job.ing.id, Number(result.price), 'ai', result.note);
+          API.price(ing.name, ing.qty, ing.unit, DB.settings().location)
+            .then(function (range) {
+              if (!range || !isFinite(Number(range.low))) throw new Error(T('cmp.noPriceFound'));
+
+              // بناخد الأقل. الأعلى بيتحفظ في الملاحظة عشان اليوزر
+              // يشوف المدى من غير ما نغيّر شكل البيانات.
+              var note = range.low === range.high
+                ? range.basis
+                : T('cmp.upTo') + ' ' + UI.money(range.high) + ' · ' + range.basis;
+              if (range.provisional) note += ' · provisional';
+
+              savePrice(market.id, ing.id, Number(range.low), 'api', note);
               finished++;
             })
             .catch(function (err) { errors[k] = err.message || 'Failed'; })
@@ -327,6 +339,20 @@
       }
     }
     next();
+  }
+
+  /**
+   * المحل اللي الأسعار جاية منه. بينشأ أول مرة لو مش موجود.
+   *
+   * ليه ننشئه بدل ما نقول لليوزر يضيفه؟ لأن اسمه جاي من الباكند،
+   * وأي غلطة إملائية منه هتخلّي الأسعار تروح عمود تاني وهو مش فاهم ليه.
+   */
+  function sourceMarket() {
+    var name = API.source();
+    var found = DB.markets().filter(function (m) {
+      return m.name.toLowerCase() === name.toLowerCase();
+    })[0];
+    return found || DB.addMarket(name);
   }
 
   /* ================================================================ events == */
@@ -356,4 +382,8 @@
 
   renderPicker();
   render();
+
+  // السيرفر ممكن ياخد لحظة. بنرسم الصفحة الأول من غير ما ننتظره،
+  // وبعدين نعيد الرسم لما يرد — عشان الصفحة ما تفضلش فاضية.
+  API.check().then(function () { render(); });
 })();

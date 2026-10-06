@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · Cheapest Basket</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="admin" dir="rtl">
+
+<main class="page">
+  <!-- UI.start() drops the header and nav in here -->
+
+  <section class="card enter enter-1">
+    <div class="card-head">
+      <h1>Admin</h1>
+      <span class="eyebrow" id="api-state">بيتصل بالسيرفر…</span>
+    </div>
+    <p class="hint">
+      الصفحة دي بتكلّم السيرفر المحلي (<code id="api-url"></code>). لو مش شغّال،
+      افتح فولدر <code>api</code> وشغّل:
+      <code>python -m uvicorn main:app --reload --port 8010</code>
+    </p>
+  </section>
+
+  <!-- ==================================================== طريقة المصدر == -->
+  <section class="card enter enter-2">
+    <div class="card-head">
+      <h2>طريقة جمع الأسعار</h2>
+      <span class="eyebrow" id="mode-state"></span>
+    </div>
+
+    <div class="opts" id="modes">
+      <label class="opt">
+        <span class="opt-head">
+          <input type="radio" name="mode" value="site">
+          <span class="opt-title">زحف الموقع</span>
+        </span>
+        <span class="opt-note">
+          بياخد الأسعار المنشورة من <strong>kibrissanalmarket.com</strong> ويحطها في
+          الجدول تحت. أسعار حقيقية، مجاني، وكل سعر معاه لينكه.
+        </span>
+      </label>
+
+      <label class="opt">
+        <span class="opt-head">
+          <input type="radio" name="mode" value="ai">
+          <span class="opt-title">بحث مؤرّض (AI)</span>
+        </span>
+        <span class="opt-note">
+          الذكاء الاصطناعي يدوّر على الأسعار في محركات البحث.
+          <strong>مقفول على الخطة المجانية</strong> — محتاج billing.
+        </span>
+      </label>
+    </div>
+  </section>
+
+  <!-- ======================================================= التحديث == -->
+  <section class="card enter enter-3">
+    <div class="card-head">
+      <h2>التحديث</h2>
+      <span class="eyebrow" id="db-summary">…</span>
+    </div>
+
+    <div class="row">
+      <button type="button" class="btn" id="refresh-btn">تحديث الأسعار</button>
+      <span class="hint" id="refresh-msg"></span>
+    </div>
+
+    <div class="prog" id="progress" hidden>
+      <span class="bar-track"><span class="bar-fill" id="progress-fill"></span></span>
+      <span class="bar-value" id="progress-value">0%</span>
+    </div>
+
+    <p class="hint">
+      الموقع بيطلب ٣٠ ثانية بين كل طلب في <code>robots.txt</code> بتاعه، وإحنا بنحترمها.
+      ٧١ قسم أكل × ٣٠ ثانية ≈ <strong>٣٦ دقيقة</strong> للتحديث الكامل.
+      تقدر تسيب الصفحة وترجع — التحديث شغّال على السيرفر، مش في المتصفح.
+    </p>
+  </section>
+
+
+  <!-- ================================================ تجربة سعر == -->
+  <section class="card enter enter-3">
+    <div class="card-head">
+      <h2>جرّب سعر</h2>
+      <span class="eyebrow" id="try-state"></span>
+    </div>
+
+    <div class="row try-row">
+      <input type="text" id="try-ingredient" class="admin-search"
+             placeholder="المكوّن… chicken breast" value="milk">
+      <input type="number" id="try-qty" class="try-qty" value="1" min="0.01" step="0.01">
+      <!-- الخيارات بتتحط من /units وقت التحميل، مش مكتوبة هنا -->
+      <select id="try-unit" class="try-unit"></select>
+      <button type="button" class="btn" id="try-btn">هات السعر</button>
+    </div>
+
+    <div id="try-result"></div>
+  </section>
+
+  <!-- ================================================ جدول الأسعار == -->
+  <section class="card enter enter-3">
+    <div class="card-head">
+      <h2>الأسعار المحفوظة</h2>
+      <span class="eyebrow" id="rows-count"></span>
+    </div>
+
+    <div class="row">
+      <input type="search" id="search" class="admin-search"
+             placeholder="دوّر… مثلاً tavuk أو sut">
+      <button type="button" class="btn-soft" id="search-btn">بحث</button>
+    </div>
+
+    <div class="scroller">
+      <table id="prices">
+        <thead>
+          <tr><th>المنتج</th><th>السعر</th><th>القسم</th><th>آخر تحديث</th></tr>
+        </thead>
+        <tbody><tr><td colspan="4" class="muted">…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<!-- cloud.js و auth.js بس: الصفحة دي محتاجة تسجيل الدخول عشان
+     تبعت الـ token للباكند. مش محتاجة data.js ولا ai.js — دول
+     بتوع بيانات اليوزر، وصفحة الأدمن ماتلمسهاش. -->
+<!-- i18n الأول: باقي الملفات بتنادي T() وقت التحميل -->
+<script src="js/i18n.js"></script>
+<script src="js/cloud.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/page-admin.js"></script>
+</body>
+</html>

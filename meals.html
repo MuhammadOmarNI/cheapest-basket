@@ -13,13 +13,13 @@
 
   <section class="card enter enter-1">
     <div class="card-head">
-      <h1>Your meals</h1>
-      <button type="button" class="btn" id="new-meal-btn">+ New meal</button>
+      <h1 data-i18n="meals.title">Your meals</h1>
+      <button type="button" class="btn" id="new-meal-btn" data-i18n="meals.new">+ New meal</button>
     </div>
     <form class="row" id="new-meal-form" hidden>
-      <input type="text" id="new-meal-name" placeholder="Meal name, e.g. Butter chicken">
-      <button type="submit" class="btn">Add</button>
-      <button type="button" class="btn-soft" id="cancel-meal">Cancel</button>
+      <input type="text" id="new-meal-name" data-i18n-ph="meals.namePh" placeholder="Meal name, e.g. Butter chicken">
+      <button type="submit" class="btn" data-i18n="meals.add">Add</button>
+      <button type="button" class="btn-soft" id="cancel-meal" data-i18n="meals.cancel">Cancel</button>
     </form>
     <div id="meal-list-wrap"></div>
   </section>
@@ -27,9 +27,13 @@
   <section class="card enter enter-2" id="editor" hidden></section>
 </main>
 
+<!-- i18n الأول: باقي الملفات بتنادي T() وقت التحميل -->
+<script src="js/i18n.js"></script>
+<script src="js/cloud.js"></script>
+<script src="js/auth.js"></script>
 <script src="js/data.js"></script>
 <script src="js/ui.js"></script>
-<script src="js/ai.js"></script>
+<script src="js/api.js"></script>
 <script src="js/page-meals.js"></script>
 </body>
 </html>

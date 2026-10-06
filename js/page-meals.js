@@ -75,23 +75,52 @@
       (meal.ingredients.length
         ? '<ul class="ing-list">' + meal.ingredients.map(function (ing) {
             return '<li class="ing-row">' +
-              '<input type="text" value="' + UI.esc(ing.name) + '" placeholder="Ingredient" ' +
+              '<input type="text" value="' + UI.esc(ing.name) + '" placeholder="' + UI.esc(T('cmp.ingredient')) + '" ' +
                 'data-ing="' + ing.id + '" data-field="name">' +
               '<input type="text" value="' + UI.esc(ing.qty == null ? '' : ing.qty) + '" ' +
-                'placeholder="Qty" data-ing="' + ing.id + '" data-field="qty">' +
-              '<input type="text" value="' + UI.esc(ing.unit) + '" placeholder="unit" ' +
-                'data-ing="' + ing.id + '" data-field="unit">' +
-              '<button type="button" class="btn-x" title="Remove" data-rm="' + ing.id + '">×</button>' +
+                'placeholder="' + UI.esc(T('meals.qty')) + '" data-ing="' + ing.id + '" data-field="qty">' +
+              unitSelect(ing.unit, 'data-ing="' + ing.id + '" data-field="unit"') +
+              '<button type="button" class="btn-x" title="' + UI.esc(T('meals.remove')) + '" data-rm="' + ing.id + '">×</button>' +
             '</li>';
           }).join('') + '</ul>'
-        : '<p class="empty-state">Nothing in this meal yet.</p>') +
+        : '<p class="empty-state">' + T('meals.empty') + '</p>') +
 
       '<form class="ing-row" id="add-ing">' +
-        '<input type="text" id="ing-name" placeholder="Add an ingredient…">' +
-        '<input type="text" id="ing-qty" placeholder="Qty">' +
-        '<input type="text" id="ing-unit" placeholder="unit">' +
+        '<input type="text" id="ing-name" placeholder="' + UI.esc(T('meals.addIngPh')) + '">' +
+        '<input type="text" id="ing-qty" placeholder="' + UI.esc(T('meals.qty')) + '">' +
+        unitSelect('', 'id="ing-unit"') +
         '<button type="submit" class="btn-x plus" title="Add">+</button>' +
       '</form>';
+  }
+
+
+  /* ================================================================ units == */
+
+  /* بتتملا من API.units(). القايمة بتيجي من السيرفر مش مكتوبة هنا —
+     لأن الباكند بيرفض أي وحدة مش في قايمته، ولو اتنينهم بيكتبوها
+     لوحدهم هيختلفوا يوم ما نضيف وحدة. */
+  var UNITS = [];
+
+  /**
+   * خانة نص حرة كانت بتخلّي اليوزر يكتب "pcs" أو "حبة"، والسيرفر
+   * بيرفضها بـ 422 وهو مش فاهم ليه. الـ select بيمنع الغلط من أصله.
+   */
+  function unitSelect(current, attrs) {
+    var value = String(current || '').toLowerCase();
+    var known = UNITS.some(function (u) { return u.value === value; });
+
+    return '<select ' + attrs + '>' +
+      '<option value=""' + (value ? '' : ' selected') + '>' + T('meals.unit') + '</option>' +
+      UNITS.map(function (u) {
+        return '<option value="' + UI.esc(u.value) + '"' +
+          (u.value === value ? ' selected' : '') + '>' + UI.esc(u.label) + '</option>';
+      }).join('') +
+      // وحدة قديمة محفوظة ومش في القايمة: بنعرضها عشان ما تختفيش
+      // من غير ما اليوزر ياخد باله، بس بنعلّمها.
+      (value && !known
+        ? '<option value="' + UI.esc(value) + '" selected>' + UI.esc(value) + ' (?)</option>'
+        : '') +
+    '</select>';
   }
 
   function renderAll() {
@@ -123,7 +152,7 @@
     form.hidden = true;
     newBtn.hidden = false;
     renderAll();
-    UI.toast('Added "' + name + '"', 'good');
+    UI.toast(T('meals.added') + ' "' + name + '"', 'good');
   });
 
   // One listener for the whole page, rather than re-attaching after every render.
@@ -143,12 +172,22 @@
       DB.removeMeal(meal.id);
       if (openId === meal.id) openId = null;
       renderAll();
-      UI.toast('Deleted "' + meal.name + '"');
+      UI.toast(T('meals.deleted') + ' "' + meal.name + '"');
 
     } else if (el.hasAttribute('data-rm')) {
       DB.removeIngredient(openId, el.getAttribute('data-rm'));
       renderAll();
     }
+  });
+
+  /* الـ select بيحفظ على change. الـ blur بتاع الخانات النصية
+     ما بيتطلقش دايماً على الـ select لما تختار بالكيبورد. */
+  document.addEventListener('change', function (e) {
+    var el = e.target;
+    if (el.tagName !== 'SELECT' || !el.hasAttribute('data-ing')) return;
+    var patch = {};
+    patch[el.getAttribute('data-field')] = el.value;
+    DB.updateIngredient(openId, el.getAttribute('data-ing'), patch);
   });
 
   document.addEventListener('submit', function (e) {
@@ -191,4 +230,11 @@
   }, true);
 
   renderAll();
+
+  // الوحدات بتيجي من السيرفر. بنرسم الأول من غير انتظار عشان الصفحة
+  // ما تفضلش فاضية، وبعدين نعيد الرسم لما توصل.
+  API.units().then(function (list) {
+    UNITS = list;
+    renderAll();
+  });
 })();
